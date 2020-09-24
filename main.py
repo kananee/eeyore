@@ -63,9 +63,10 @@ def trend_twitter():  #ดึงข้อมูล Trends Twitter
 def top10(trend_text,A,B,ad): #top n value 
     trend_plot=[]
 
-    text='Top Trends Thailand '+Time
+    text='Thailand Trends (Tweets/Minute) '+Time
     for i in range(A,B):
-        text=text+'\n'+str(i+1)+') '+trend_text[i]
+        TPM=twitter_TPM(trend_text[i])
+        text=text+'\n'+str(i+1)+') '+trend_text[i]+' '+str(round(TPM,2))
         trend_plot.append(trend_text[i])
     text=text+"\n\n"+str(ad)
     return(text)
@@ -142,6 +143,68 @@ def related_hashtag(df,text_has):
         #print(df_hastag['#Hastag'][i])
         text_has=text_has+'\n'+str(i+1)+') '+'#'+str(df_hastag['#Hastag'][i])
     return(text_has)
+
+def twitter_TPM(Name):
+    Data=list()
+    try:
+        for tweet in tweepy.Cursor(api.search,q=str(Name)+" -filter:retweets",count=100).items(200):
+            Data.append({'created_at':tweet.created_at,
+                          'texts':tweet.text,
+                     'id':tweet.id,
+                     'source':tweet.source,
+                     'geo':tweet.geo,
+                     'lang':tweet.lang,
+                      'Retweet':tweet.retweet_count,
+                      'Favorite':tweet.favorite_count,
+                      'id_str':tweet.id_str,
+                      'place':tweet.place,
+                      'entities':tweet.entities,
+                      'Has':tweet.entities.get('hashtags'),
+                      'followers_count':tweet.user.followers_count,
+                      'protected':tweet.user.protected,
+                      'description':tweet.user.description,
+                      'name':tweet.user.screen_name,
+                      'friends_count':tweet.user.friends_count,
+                      'statuses_count':tweet.user.statuses_count,
+                      'ids':tweet.user.id,
+                      'location':tweet.user.location,
+                      'profile_image_url':tweet.user.profile_image_url,
+                      'join_date':tweet.user.created_at
+                      
+                 })
+            #time.sleep(0.055)
+        
+    except tweepy.TweepError:
+        time.sleep(10) # sleep for 2 minutes. You may try different time
+
+    df=pd.DataFrame(Data)
+    df=df.set_index('created_at')
+    df=df.tz_localize('Etc/GMT+7', level=0).tz_convert(None)
+    df=df.reset_index()
+    #print(df)
+    df['today']=pd.Timestamp.today()
+    df['age']=df['today']-df['join_date']
+    df['dif_age']=df['age'].dt.days
+    df['dif_age']=df['dif_age']/365
+
+
+    a=df['created_at'].head(1)
+    b=df['created_at'].tail(1)
+    M=a[0].minute-b[199].minute
+    S=a[0].second-b[199].second
+
+    if(M<0):
+      M=-M
+    if(S<0):
+      S=-S
+
+    S=S+(60*M)
+    TPM=200/S*60
+
+    return(TPM)
+
+
+
 
 
 

@@ -66,7 +66,7 @@ def top10(trend_text,A,B,ad): #top n value
     text='Thailand Trends (Tweets/Minute) '+Time
     for i in range(A,B):
         TPM=twitter_TPM(trend_text[i])
-        text=text+'\n'+str(i+1)+') '+trend_text[i]+' '+str(round(TPM,2))
+        text=text+'\n'+str(i+1)+') '+trend_text[i]+'  '+str(round(TPM,2))
         trend_plot.append(trend_text[i])
     text=text+"\n\n"+str(ad)
     return(text)
@@ -190,16 +190,12 @@ def twitter_TPM(Name):
 
     a=df['created_at'].head(1)
     b=df['created_at'].tail(1)
-    M=a[0].minute-b[199].minute
-    S=a[0].second-b[199].second
 
-    if(M<0):
-      M=-M
-    if(S<0):
-      S=-S
 
-    S=S+(60*M)
-    TPM=200/S*60
+
+
+    T=a[0]-b[199]
+    TPM=200/T.seconds*60
 
     return(TPM)
 

@@ -54,7 +54,7 @@ def trend_twitter():  #ดึงข้อมูล Trends Twitter
     Name_trend=[]
     tweet_volume=[]
     for i in trends[0]["trends"]:
-        if '#' in i["name"]:
+        if 'asdfg' not in i["name"]:
             Name_trend.append(i["name"]) 
             tweet_volume.append(i["tweet_volume"])    
            
@@ -185,23 +185,23 @@ while True:
                 listhas.append(i)
                 break
                 
-        Retweets=" -filter:retweets"   #  " -filter:retweets"  ไม่รวม Retweet  , ""  รวม Retweet
-        lang='' #'th' , 'en' , 'jp'  เว้นว่างสำหรับทุกภาษา 
-        df,now=twitter_data(hashtag,lang,Retweets) 
-        text_has='Data on '+hashtag+'   '+str(now)+'\nTweets   :  '+str(len(df))+'\nUSERS  :  '+str(df[['ids']].drop_duplicates().count()[0])+'\nRetweets  :  '+str(df['Retweet'].sum(axis = 0, skipna = True))+'\nLikes  :  '+str(df['Favorite'].sum(axis = 0, skipna = True))+'\nTop 5 Related #'
-        df_has=related_hashtag(df,text_has)
+        #Retweets=" -filter:retweets"   #  " -filter:retweets"  ไม่รวม Retweet  , ""  รวม Retweet
+        #lang='' #'th' , 'en' , 'jp'  เว้นว่างสำหรับทุกภาษา 
+        #df,now=twitter_data(hashtag,lang,Retweets) 
+        #text_has='Data on '+hashtag+'   '+str(now)+'\nTweets   :  '+str(len(df))+'\nUSERS  :  '+str(df[['ids']].drop_duplicates().count()[0])+'\nRetweets  :  '+str(df['Retweet'].sum(axis = 0, skipna = True))+'\nLikes  :  '+str(df['Favorite'].sum(axis = 0, skipna = True))+'\nTop 5 Related #'
+        #df_has=related_hashtag(df,text_has)
         time.sleep(60)
                 
-    if(Timeupdate.minute==0 or Timeupdate.minute==30):
-        try:
-            api.update_status(status=df_has)
-            time.sleep(60)
-            if(len(listhas)>10):
-                listhas.pop(0)
-                if(len(listhas)>10):
-                    listhas.pop(0)
-        except:
-            time.sleep(60)
+    #if(Timeupdate.minute==0 or Timeupdate.minute==30):
+        #try:
+            #api.update_status(status=df_has)
+            #time.sleep(60)
+            #if(len(listhas)>10):
+                #listhas.pop(0)
+                #if(len(listhas)>10):
+                    #listhas.pop(0)
+        #except:
+            #time.sleep(60)
             
     if(Timeupdate.hour==0 and Timeupdate.minute==3):
         try:

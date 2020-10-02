@@ -63,7 +63,7 @@ def trend_twitter():  #ดึงข้อมูล Trends Twitter
 def top10(trend_text,A,B,ad): #top n value 
     trend_plot=[]
 
-    text='Thailand Trends (Tweets/Minute) '+Time
+    text='Tweets/Minute '+Time
     for i in range(A,B):
         TPM=twitter_TPM(trend_text[i])
         text=text+'\n'+str(i+1)+') '+trend_text[i]+'  '+str(round(TPM,2))
@@ -228,14 +228,14 @@ while True:
         try:
             api.update_status(status=text1)
         except:
-            text1=text1[30:]
+            text1=text1[14:]
             api.update_status(status=text1)
         text2=top10(trend_text[0],5,10,Tweets_slot1)
         time.sleep(40)
         try:
             api.update_status(status=text2)
         except:
-            text2=text2[30:]
+            text2=text2[14:]
             api.update_status(status=text2)
         
         for i in trend_text[0]:

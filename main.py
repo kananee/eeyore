@@ -251,7 +251,7 @@ while True:
         df_has=related_hashtag(df,text_has)
         time.sleep(60)
                 
-    if(Timeupdate.minute==0):
+    if(Timeupdate.minute==0 or Timeupdate.minute==30):
         try:
             api.update_status(status=df_has)
             time.sleep(60)

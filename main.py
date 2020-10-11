@@ -224,8 +224,9 @@ while True:
                 Tweets_slot2=i[5]
         
         trend_text=trend_twitter()
-        text1=top10(trend_text[0],0,5,Tweets_slot2)
+        
         try:
+            text1=top10(trend_text[0],0,5,Tweets_slot2)
             api.update_status(status=text1)
         except:
             text1=text1[14:]
@@ -234,9 +235,10 @@ while True:
             except:
                 print("hello")
                 
-        text2=top10(trend_text[0],5,10,Tweets_slot1)
+        
         time.sleep(40)
         try:
+            text2=top10(trend_text[0],5,10,Tweets_slot1)
             api.update_status(status=text2)
         except:
             text2=text2[14:]

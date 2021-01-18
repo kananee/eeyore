@@ -63,10 +63,10 @@ def trend_twitter():  #ดึงข้อมูล Trends Twitter
 def top10(trend_text,A,B,ad): #top n value 
     trend_plot=[]
 
-    text='Tweets/Minute '+Time
+    text=Time
     for i in range(A,B):
         TPM=twitter_TPM(trend_text[i])
-        text=text+'\n'+str(i+1)+') '+trend_text[i]+'  '+str(round(TPM,2))
+        text=text+'\n'+str(i+1)+'. '+trend_text[i]+'  '+str(round(TPM,2))
         trend_plot.append(trend_text[i])
     text=text+"\n\n"+str(ad)
     return(text)

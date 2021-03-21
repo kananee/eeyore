@@ -3,3 +3,6 @@ requests
 pandas
 gspread-pandas
 xlrd
+flask_restful
+jsonpify
+Flask

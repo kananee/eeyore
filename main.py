@@ -36,4 +36,4 @@ class get_mathcal(Resource):
         return(result)
 api.add_resource(get_mathcal, '/cal',endpoint='cal')
 if __name__=='__main__':
-    app.run(threaded=True)
+    app.run(host='https://friendwithchatbot.herokuapp.com/',threaded=True)

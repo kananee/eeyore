@@ -271,14 +271,15 @@ while True:
         except:
             time.sleep(60)
             
-    if(Timeupdate.minute==5):
+    if(Timeupdate.minute==14):
+        lang=''
         df,now=twitter_data('#เที่ยวไทย',lang,Retweets) 
         text_has='Data on '+hashtag+'   '+str(now)+'\nTweets   :  '+str(len(df))+'\nUSERS  :  '+str(df[['ids']].drop_duplicates().count()[0])+'\nRetweets  :  '+str(df['Retweet'].sum(axis = 0, skipna = True))+'\nLikes  :  '+str(df['Favorite'].sum(axis = 0, skipna = True))+'\nTop 5 Related #'
         df_has=related_hashtag(df,text_has)
         url = 'https://notify-api.line.me/api/notify'
         token = environ['token']
         headers = {'content-type':'application/x-www-form-urlencoded','Authorization':'Bearer '+token}
-        msg11 =df_has
+        msg11 =text_has
         r = requests.post(url, headers=headers , data = {'message':msg11})
         time.sleep(60)
             

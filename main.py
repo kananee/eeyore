@@ -271,7 +271,7 @@ while True:
         except:
             time.sleep(60)
             
-    if(Timeupdate.hour==11 and Timeupdate.minute==13):
+    if(Timeupdate.hour==23 and Timeupdate.minute==57):
         lang=''
         Retweets=" -filter:retweets"
         h_line='#Namneungbnk48'
@@ -281,7 +281,7 @@ while True:
         url = 'https://notify-api.line.me/api/notify'
         tokenm = environ['tokenm']
         headers = {'content-type':'application/x-www-form-urlencoded','Authorization':'Bearer '+tokenm}
-        msg11 =text_has+df_has
+        msg11 =df_has
         r = requests.post(url, headers=headers , data = {'message':msg11})
         time.sleep(60)
             

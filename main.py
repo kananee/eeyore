@@ -271,7 +271,7 @@ while True:
         except:
             time.sleep(60)
             
-    if(Timeupdate.hour==4 and Timeupdate.minute==4):
+    if(Timeupdate.hour==11 and Timeupdate.minute==13):
         lang=''
         Retweets=" -filter:retweets"
         h_line='#Namneungbnk48'

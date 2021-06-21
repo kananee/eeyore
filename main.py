@@ -3,9 +3,7 @@ from tweepy import API
 import tweepy
 import pandas as pd
 from datetime import tzinfo
-from datetime import datetime
 from datetime import datetime,timedelta
-import random
 import datetime as dt
 import time
 import json
@@ -64,8 +62,8 @@ def Today_Data():
   return(Time_Data)
 
 def Tweet_Announcement():
-  Ann_text=['📢 Reply Hashtag to this tweet for more detail data\n[ the most hastag will tweet detail at '+str(Futuretime())+' ]']
-  Tweets=random.choice(Ann_text)
+  Ann_text='📢 Reply Hashtag to this tweet for more detail data\n[ the most hastag will tweet detail at '+str(Futuretime())+' ]'
+  Tweets=Ann_text
   return(Tweets)
 
 def Proess_CalTag(tweet_id):

@@ -243,7 +243,7 @@ while True:
     Text_Hash=related_hashtag(df)
     Tweet_Data(df,Text_Hash)
 
-  if(hour==23 and Minute==50):
+  if(Hour==23 and Minute==50):
     Ads_Slot1,Ads_Slot2=Ads_update()
     notify('Reset Ads 🎈')
 

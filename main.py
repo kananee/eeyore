@@ -1,14 +1,25 @@
-import tweepy
 from tweepy import OAuthHandler
 from tweepy import API
-import datetime as dt
-import  time
-from os import environ
-import json
-from datetime import datetime,timedelta
+import tweepy
 import pandas as pd
-import requests
 from datetime import tzinfo
+from datetime import datetime
+from datetime import datetime,timedelta
+import random
+import datetime as dt
+import time
+import json
+from os import environ
+import requests
+
+access_token=environ['access_token']
+access_token_secret=environ['access_token_secret']
+consumer_key=environ['consumer_key']
+consumer_secret=environ['consumer_secret']
+auth = OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_token_secret)
+api = API(auth)
+token = environ['token']
 
 class FixedOffset(tzinfo):
     def __init__(self, offset):
@@ -24,112 +35,163 @@ class FixedOffset(tzinfo):
 
     def dst(self, dt):
         return self.__dst
-    
-url = 'https://notify-api.line.me/api/notify'
-token = environ['token']
-headers = {'content-type':'application/x-www-form-urlencoded','Authorization':'Bearer '+token}
-msg ='Program runnning Top Trends Thailand'
-r = requests.post(url, headers=headers , data = {'message':msg})
 
-file_name = 'https://docs.google.com/spreadsheet/ccc?key=1RxB3Oa3QyfcMz15-WhHFlsWVJiDc-c6umNQHDpvYEIQ&output=xlsx'
-df_slot2 = pd.read_excel(file_name,sheet_name='Slot2')
-df_slot1 = pd.read_excel(file_name,sheet_name='Slot1')
+def notify(msg):
+  url = 'https://notify-api.line.me/api/notify'
+  headers = {'content-type':'application/x-www-form-urlencoded','Authorization':'Bearer '+token}
+  r = requests.post(url, headers=headers , data = {'message':msg})
 
-d_slot1=df_slot1.to_dict('split')
-d_slot2=df_slot2.to_dict('split')
+def DateTimeNow():
+  date_now=datetime.strftime(datetime.now(FixedOffset(7)),"%Y/%m/%d")
+  Time_now=datetime.strftime(datetime.now(FixedOffset(7)),"%H:%M:%S")
+  return(date_now,Time_now)
 
-access_token=environ['access_token']
-access_token_secret=environ['access_token_secret']
-consumer_key=environ['consumer_key']
-consumer_secret=environ['consumer_secret']
-auth = OAuthHandler(consumer_key, consumer_secret)
-auth.set_access_token(access_token, access_token_secret)
-api = API(auth)
+def DateTimePrv():
+  date_prv=datetime.strftime(datetime.now(FixedOffset(7))-timedelta(1),"%Y/%m/%d")
+  Time_prv='00:00:00'
+  return(date_prv,Time_prv)
+
+def Timeloop():
+  Timeupdate=dt.datetime.now(FixedOffset(7))
+  return(Timeupdate)
+
+def Futuretime():
+  Time_Future=datetime.strftime(datetime.now(FixedOffset(8)),"%H:00:00")
+  return(Time_Future)
+
+def Today_Data():
+  Time_Data=datetime.strftime(datetime.now(FixedOffset(7))-timedelta(1),"%Y-%m-%d")
+  return(Time_Data)
+
+def Tweet_Announcement():
+  Ann_text=['📢 Reply Hashtag to this tweet for more detail data\n[ the most hastag will tweet detail at '+str(Futuretime())+' ]']
+  Tweets=random.choice(Ann_text)
+  return(Tweets)
+
+def Proess_CalTag(tweet_id):
+  #Timeline=api.user_timeline(user_id='432538747',count=1,page=1,exclude_replies=True)
+  #tweet_id=Timeline[0].id_str
+
+  Data=[]
+  username='BearguinTrend'
+  for tweet in tweepy.Cursor(api.search,q='to:{}'.format(username),count=1000,since_id=tweet_id, tweet_mode='extended').items(1000):
+    Data.append({'ids':tweet.user.id, 'Text':tweet.full_text,'Has':tweet.entities.get('hashtags')})
+
+  df=pd.DataFrame(Data)
+  df=df.drop_duplicates(subset=['ids'])
+
+  hastag=[]
+  for i in df['Has']:
+      rm_has=[]
+      for items in i:
+        rm_has.append(items['text'].lower())
+      rm_has=list(dict.fromkeys(rm_has))
+      for j in rm_has:
+        hastag.append(j)
+
+  df_hastag=pd.DataFrame({'#Hastag':hastag})
+  df_hastag['Count']=1
+  df_hastag=df_hastag.groupby(['#Hastag']).sum()
+  All_Has=df_hastag.sum()[0]
+  df_hastag=df_hastag.sort_values(by=['Count'], ascending=False)
+
+  S_HAS=df_hastag.reset_index()['#Hastag'][0]
+  S_VALUE=df_hastag.reset_index()['Count'][0]
+
+  return(S_HAS,S_VALUE,All_Has)
+
+def Reply_Summary(tweet_id):
+  #Timeline=api.user_timeline(user_id='432538747',count=1,page=1,exclude_replies=True)
+  #tweet_id=Timeline[0].id_str
+  try:
+    Check=0
+    S_HAS,S_VALUE,All_Has=Proess_CalTag(tweet_id)
+    api.update_status(status = 'Hashtag voting results '+str(DateTimeNow()[0])+' '+str(DateTimeNow()[1])+'\n\n#'+str(S_HAS)+' '+str(round(S_VALUE/All_Has*100,2))+' %', in_reply_to_status_id = tweet_id , auto_populate_reply_metadata=True)
+    S_HAS='#'+str(S_HAS)
+  except:
+    Check=1
+    S_HAS=Name
+  return(Check,S_HAS)
+
+def Ads():
+  if(Timeloop().minute<30):
+    Ads_post1=Ads_Slot1[(Ads_Slot1['Time']==Timeloop().hour) & (Ads_Slot1['Part']==1)]['text'].iloc[0]
+    Ads_post2=Ads_Slot2[(Ads_Slot2['Time']==Timeloop().hour) & (Ads_Slot2['Part']==1)]['text'].iloc[0]
+  else:
+    Ads_post1=Ads_Slot1[(Ads_Slot1['Time']==Timeloop().hour) & (Ads_Slot1['Part']==2)]['text'].iloc[0]
+    Ads_post2=Ads_Slot2[(Ads_Slot2['Time']==Timeloop().hour) & (Ads_Slot2['Part']==2)]['text'].iloc[0]
+  return(Ads_post1,Ads_post2)
+
+def Ads_update():
+  file_name = 'https://docs.google.com/spreadsheet/ccc?key=1RxB3Oa3QyfcMz15-WhHFlsWVJiDc-c6umNQHDpvYEIQ&output=xlsx'
+  Ads_Slot1 = pd.read_excel(file_name,sheet_name='Slot2')
+  Ads_Slot2 = pd.read_excel(file_name,sheet_name='Slot1')
+  return(Ads_Slot1,Ads_Slot2)
+
+def TopTrends():
+  Twitter_trend=api.trends_place(1225448)
+  Trends = json.loads(json.dumps(Twitter_trend, indent=1))
+  Name_Trend=[]
+  Tweet_Volumn=[]
+  for i in Trends[0]["trends"]:
+    if 'Noneee' not in i["name"]:
+        Name_Trend.append(i["name"]) 
+        Tweet_Volumn.append(i["tweet_volume"])
 
 
-def trend_twitter():  #ดึงข้อมูล Trends Twitter
-    brazil_trends=api.trends_place(1225448)
-    trends = json.loads(json.dumps(brazil_trends, indent=1))
-    
-    Name_trend=[]
-    tweet_volume=[]
-    for i in trends[0]["trends"]:
-        if 'asdfg' not in i["name"]:
-            Name_trend.append(i["name"]) 
-            tweet_volume.append(i["tweet_volume"])    
-           
-    return(Name_trend,tweet_volume)
 
-def top10(trend_text,A,B,ad): #top n value 
-    trend_plot=[]
-
-    text=Time
-    for i in range(A,B):
-        TPM=twitter_TPM(trend_text[i])
-        text=text+'\n'+str(i+1)+'. '+trend_text[i]+'  '+str(round(TPM,2))
-        trend_plot.append(trend_text[i])
-    text=text+"\n\n"+str(ad)
-    return(text)
+  Tweet_Text=str(DateTimeNow()[0])+' '+str(DateTimeNow()[1])+'\n'
+  for i in range(0,5):
+    Tweet_Text=Tweet_Text+str(i+1)+'. '+str(Name_Trend[i])+'\n'
+  Tweet_Text=Tweet_Text+'\n'+str(Ads()[0])
+  api.update_status(status = Tweet_Text)
+  time.sleep(20)
 
 
-def twitter_data(Name,lang,Retweets):
-    now = datetime.strftime(datetime.now()-timedelta(1),"%Y-%m-%d")
-    now1 = datetime.strftime(datetime.now(),"%Y-%m-%d")
-    #now=now.strftime("%Y-%m-%d")
-    Data=list()
-    try:
-        for tweet in tweepy.Cursor(api.search,q=str(Name)+Retweets,count=1000,since=now,lang=lang).items():
-            Data.append({'created_at':tweet.created_at,
-                          'texts':tweet.text,
-                     'id':tweet.id,
-                     'source':tweet.source,
-                     'geo':tweet.geo,
-                     'lang':tweet.lang,
-                      'Retweet':tweet.retweet_count,
-                      'Favorite':tweet.favorite_count,
-                      'id_str':tweet.id_str,
-                      'place':tweet.place,
-                      'entities':tweet.entities,
-                      'Has':tweet.entities.get('hashtags'),
-                      'followers_count':tweet.user.followers_count,
-                      'protected':tweet.user.protected,
-                      'description':tweet.user.description,
-                      'name':tweet.user.screen_name,
-                      'friends_count':tweet.user.friends_count,
-                      'statuses_count':tweet.user.statuses_count,
-                      'ids':tweet.user.id,
-                      'location':tweet.user.location,
-                      'profile_image_url':tweet.user.profile_image_url,
-                      'join_date':tweet.user.created_at
-                      
-                 })
-            #time.sleep(0.055)
-        
-    except tweepy.TweepError:
-        time.sleep(10) # sleep for 2 minutes. You may try different time
-        #print('Maximum')
-    df=pd.DataFrame(Data)
-    df=df.set_index('created_at')
-    df=df.tz_localize('Etc/GMT+7', level=0).tz_convert(None)
-    df=df.reset_index()
-    #print(df)
-    df['today']=pd.Timestamp.today()
-    df['age']=df['today']-df['join_date']
-    df['dif_age']=df['age'].dt.days
-    df['dif_age']=df['dif_age']/365
-    df[df['created_at']==now1]
-    #print('dfcom')
-    return(df,now)
 
-def related_hashtag(df,text_has):
+  Tweet_Text=str(DateTimeNow()[0])+' '+str(DateTimeNow()[1])+'\n'
+  for i in range(5,10):
+    Tweet_Text=Tweet_Text+str(i+1)+'. '+str(Name_Trend[i])+'\n'
+  if(Timeloop().minute<30):
+      Tweet_Text=Tweet_Text+'\n'+Tweet_Announcement()
+  else:
+      Tweet_Text=Tweet_Text+'\n'+str(Ads()[1])
+  api.update_status(status = Tweet_Text)
+
+  for i in Name_Trend:
+    if i not in List_has:
+      Name=i
+      List_has.append(i)
+      break
+
+  Timeline=api.user_timeline(user_id='1252056460608933888',count=1,page=1,exclude_replies=True)
+  tweet_id=Timeline[0].id_str
+
+  return(tweet_id,Name)
+
+def search_tweet(Name):
+  lang=''
+  Retweets=" -filter:retweets"
+  Data=list()
+  try:
+    for tweet in tweepy.Cursor(api.search,q=str(Name)+Retweets,count=1000,since=Today_Data(),lang=lang).items():
+      Data.append({'Retweet':tweet.retweet_count,'Favorite':tweet.favorite_count,'Has':tweet.entities.get('hashtags'),'ids':tweet.user.id,'join_date':tweet.user.created_at})
+  except tweepy.TweepError:
+    time.sleep(10)
+  
+  df=pd.DataFrame(Data)
+  df['today']=pd.Timestamp.today()
+  df['age']=df['today']-df['join_date']
+  df['dif_age']=df['age'].dt.days
+  df['dif_age']=df['dif_age']/365
+
+  return(df)
+
+def related_hashtag(df):
     hastag=[]
-    #pd.DataFrame(k['fgfdgd'])
     for i in df['Has']:
         for items in i:
             hastag.append(items['text'].lower())
-            #print(t['text'])
-
-        
         df_hastag=pd.DataFrame({'#Hastag':hastag})
         df_hastag['Count']=1
         df_hastag=df_hastag.groupby(['#Hastag']).sum()
@@ -137,239 +199,74 @@ def related_hashtag(df,text_has):
     df_hastag=df_hastag.head(6)
     df_hastag=df_hastag.tail(5)
     df_hastag=df_hastag.reset_index()
-    #print(len(df_hastag))
-    
+
+    Text_Hash=[]
     for i in range(0,len(df_hastag)):
-        #print(df_hastag['#Hastag'][i])
-        text_has=text_has+'\n'+str(i+1)+') '+str(df_hastag['#Hastag'][i])
-    return(text_has)
+        Text_Hash.append(df_hastag['#Hastag'][i])
+    return(Text_Hash)
 
-def twitter_TPM(Name):
-    Data=list()
-    try:
-        for tweet in tweepy.Cursor(api.search,q=str(Name)+" -filter:retweets",count=100).items(200):
-            Data.append({'created_at':tweet.created_at,
-                          'texts':tweet.text,
-                     'id':tweet.id,
-                     'source':tweet.source,
-                     'geo':tweet.geo,
-                     'lang':tweet.lang,
-                      'Retweet':tweet.retweet_count,
-                      'Favorite':tweet.favorite_count,
-                      'id_str':tweet.id_str,
-                      'place':tweet.place,
-                      'entities':tweet.entities,
-                      'Has':tweet.entities.get('hashtags'),
-                      'followers_count':tweet.user.followers_count,
-                      'protected':tweet.user.protected,
-                      'description':tweet.user.description,
-                      'name':tweet.user.screen_name,
-                      'friends_count':tweet.user.friends_count,
-                      'statuses_count':tweet.user.statuses_count,
-                      'ids':tweet.user.id,
-                      'location':tweet.user.location,
-                      'profile_image_url':tweet.user.profile_image_url,
-                      'join_date':tweet.user.created_at
-                      
-                 })
-            #time.sleep(0.055)
-        
-    except tweepy.TweepError:
-        time.sleep(10) # sleep for 2 minutes. You may try different time
+def Tweet_Data(df,Text_Hash):
+  if(len(df)>16500):
+    Tweets='>'+str(len(df))
+    Users='>'+str(df[['ids']].drop_duplicates().count()[0])
+  else:
+    Tweets=str(len(df))
+    Users=str(df[['ids']].drop_duplicates().count()[0])
+  Text_tweet='Data on '+str(Name)+' '+str(Today_Data())+'\n'
+  Text_tweet=Text_tweet+'Tweets : '+Tweets+'\nUsers : '+Users+'\nRetweets : '+str(df['Retweet'].sum(axis = 0, skipna = True))+'\nLikes : '+str(df['Favorite'].sum(axis = 0, skipna = True))+'\nTop 5 Related #\n'
+  for i in range(0,5):
+    Text_tweet=Text_tweet+str(i+1)+'. '+str(Text_Hash[i])+'\n'
+  api.update_status(status = Text_tweet)
 
-    df=pd.DataFrame(Data)
-    df=df.set_index('created_at')
-    df=df.tz_localize('Etc/GMT+7', level=0).tz_convert(None)
-    df=df.reset_index()
-    #print(df)
-    df['today']=pd.Timestamp.today()
-    df['age']=df['today']-df['join_date']
-    df['dif_age']=df['age'].dt.days
-    df['dif_age']=df['dif_age']/365
-
-
-    a=df['created_at'].head(1)
-    b=df['created_at'].tail(1)
-
-
-
-
-    T=a[0]-b[199]
-    TPM=200/T.seconds*60
-
-    return(TPM)
-
-
-    
-
-
-
-
-listhas=[]
-diffollow=0 
-
+List_has=[]
+Ads_Slot1,Ads_Slot2=Ads_update()
+notify('Twitter BearGuinTrend Start!!! 🦄')
 while True:
-    Timeupdate=dt.datetime.now(FixedOffset(7))
-    if(Timeupdate.minute==15 or Timeupdate.minute==45):
-        Time=str(Timeupdate.strftime("%x"))+'  '+str(Timeupdate.strftime("%X"))
-        if(Timeupdate.minute==15):
-            timecheck=1
-        elif(Timeupdate.minute==45):
-            timecheck=2
-        for i in d_slot1['data']:
-            if(i[0]==Timeupdate.hour and i[1]==timecheck):
-                Tweets_slot1=i[5]
-        for i in d_slot2['data']:
-            if(i[0]==Timeupdate.hour and i[1]==timecheck):
-                Tweets_slot2=i[5]
-        
-        trend_text=trend_twitter()
-        
-        try:
-            text1=top10(trend_text[0],0,5,Tweets_slot2)
-            api.update_status(status=text1)
-        except:
-            text1=text1
-            try:
-                api.update_status(status=text1)
-            except:
-                print("hello")
-                
-        
-        time.sleep(40)
-        try:
-            text2=top10(trend_text[0],5,10,Tweets_slot1)
-            api.update_status(status=text2)
-        except:
-            text2=text2
-            try:
-                api.update_status(status=text2)
-            except:
-                peint("hello")
-        
-        for i in trend_text[0]:
-            if i not in listhas:
-                hashtag=i
-                listhas.append(i)
-                break
-                
-        Retweets=" -filter:retweets"   #  " -filter:retweets"  ไม่รวม Retweet  , ""  รวม Retweet
-        lang='' #'th' , 'en' , 'jp'  เว้นว่างสำหรับทุกภาษา 
-        df,now=twitter_data(hashtag,lang,Retweets) 
-        text_has='Data on '+hashtag+'   '+str(now)+'\nTweets   :  '+str(len(df))+'\nUSERS  :  '+str(df[['ids']].drop_duplicates().count()[0])+'\nRetweets  :  '+str(df['Retweet'].sum(axis = 0, skipna = True))+'\nLikes  :  '+str(df['Favorite'].sum(axis = 0, skipna = True))+'\nTop 5 Related #'
-        df_has=related_hashtag(df,text_has)
-        time.sleep(60)
-                
-    if(Timeupdate.minute==0 or Timeupdate.minute==30):
-        try:
-            api.update_status(status=df_has)
-            time.sleep(60)
-            if(len(listhas)>20):
-                listhas.pop(0)
-                if(len(listhas)>20):
-                    listhas.pop(0)
-        except:
-            time.sleep(60)
-            
-    if(Timeupdate.hour==23 and Timeupdate.minute==57):
-        lang=''
-        Retweets=" -filter:retweets"
-        h_line='#Namneungbnk48'
-        df,now=twitter_data(h_line,lang,Retweets)
-        text_has='Data on '+h_line+'   '+str(now)+'\nTweets   :  '+str(len(df))+'\nUSERS  :  '+str(df[['ids']].drop_duplicates().count()[0])+'\nRetweets  :  '+str(df['Retweet'].sum(axis = 0, skipna = True))+'\nLikes  :  '+str(df['Favorite'].sum(axis = 0, skipna = True))+'\nTop 5 Related #'
-        df_has=related_hashtag(df,text_has)
-        url = 'https://notify-api.line.me/api/notify'
-        tokenm = environ['tokenm']
-        headers = {'content-type':'application/x-www-form-urlencoded','Authorization':'Bearer '+tokenm}
-        msg11 =df_has
-        r = requests.post(url, headers=headers , data = {'message':msg11})
-        time.sleep(60)
-            
-    if(Timeupdate.hour==0 and Timeupdate.minute==3):
-        try:
-            file_name = 'https://docs.google.com/spreadsheet/ccc?key=1RxB3Oa3QyfcMz15-WhHFlsWVJiDc-c6umNQHDpvYEIQ&output=xlsx'
-            df_slot2 = pd.read_excel(file_name,sheet_name='Slot2')
-            df_slot1 = pd.read_excel(file_name,sheet_name='Slot1')
+  Minute=Timeloop().minute
+  Hour=Timeloop().hour
+  if(Minute==15):
+    tweet_id,Name=TopTrends()
+    time.sleep(20)
 
-            d_slot1=df_slot1.to_dict('split')
-            d_slot2=df_slot2.to_dict('split')
-            
-            
-            url = 'https://notify-api.line.me/api/notify'
-            token = environ['token']
-            headers = {'content-type':'application/x-www-form-urlencoded','Authorization':'Bearer '+token}
-            msg ='Reset Ads BearGuin'
-            r = requests.post(url, headers=headers , data = {'message':msg})
-            time.sleep(60)
-            
-        except:
-            time.sleep(60)
-    if(Timeupdate.hour==23 and Timeupdate.minute==55):
-        Data=list()  
-        try:
-            for i in range(1,25):
-                for tweet in api.user_timeline(id="BearguinTrend",page=i):
-                    Data.append({'created_at':tweet.created_at,
-                        'texts':tweet.text,
-                        'id':tweet.id,
-                        'source':tweet.source,
-                        'geo':tweet.geo,
-                        'lang':tweet.lang,
-                        'Retweet':tweet.retweet_count,
-                        'Favorite':tweet.favorite_count,
-                        'id_str':tweet.id_str,
-                        'place':tweet.place,
-                        'entities':tweet.entities,
-                        'Has':tweet.entities.get('hashtags'),
-                        'followers_count':tweet.user.followers_count,
-                        'protected':tweet.user.protected,
-                        'description':tweet.user.description,
-                        'name':tweet.user.screen_name,
-                        'friends_count':tweet.user.friends_count,
-                        'statuses_count':tweet.user.statuses_count,
-                        'ids':tweet.user.id,
-                        'location':tweet.user.location,
-                        'profile_image_url':tweet.user.profile_image_url,
-                        'join_date':tweet.user.created_at
-                    })
+  if(Minute==30):
+    df=search_tweet(Name)
+    Text_Hash=related_hashtag(df)
+    Tweet_Data(df,Text_Hash)
+    time.sleep(20)
+
+  if(Minute==45):
+    tweet_id2,Name=TopTrends()
+    time.sleep(20)
+
+  if(Minute==59):
+    Post,Name=Reply_Summary(tweet_id)
+    time.sleep(60)
+    df=search_tweet(Name)
+    Text_Hash=related_hashtag(df)
+    Tweet_Data(df,Text_Hash)
+
+  if(hour==23 and Minute=50):
+    Ads_Slot1,Ads_Slot2=Ads_update()
+    notify('Reset Ads 🎈')
+
+
+  time.sleep(40)
 
 
 
-        except tweepy.TweepError:
-            time.sleep(20) # sleep for 2 minutes. You may try different time
-        df=pd.DataFrame(Data)
-        df=df.set_index('created_at')
-        df=df.tz_localize('Etc/GMT+7', level=0).tz_convert(None)
-        df=df.reset_index()                
-        today = Timeupdate
-        df['year'] = pd.DatetimeIndex(df['created_at']).year
-        df['month'] = pd.DatetimeIndex(df['created_at']).month
-        df['day'] = pd.DatetimeIndex(df['created_at']).day
-        df['hour'] = pd.DatetimeIndex(df['created_at']).hour
-        df['min'] = pd.DatetimeIndex(df['created_at']).minute        
-        
-        df=df[(df.day == Timeupdate.day) & (df.month == Timeupdate.month)]
-        df.loc[ (df['min'] <= 17) & (df['min'] >= 14 ), 'Type'] = 'A'
-        df.loc[ (df['min'] <= 47) & (df['min'] >= 44 ), 'Type'] = 'B'
-        df['Type']=df['hour'].astype(str)+df['Type']
-        
-        list_time=['0A','0B','1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B','7A','7B','8A','8B','9A','9B','10A','10B','11A','11B','12A','12B','13A','13B','14A','14B','15A','15B','16A','16B','17A','17B','18A','18B','19A','19B','20A','20B','21A','21B','22A','22B','23A','23B']       
 
-        Table=pd.DataFrame(list_time)
-        Table=Table[~Table[0].isin(df['Type'])]
-        
-        text='\nError slot BearGuin   '+today.strftime("%Y-%m-%d")
 
-        for i in Table[0]:
-            text=text+'\nSlot   '+i        
-        url = 'https://notify-api.line.me/api/notify'
-        token = environ['token']
-        headers = {'content-type':'application/x-www-form-urlencoded','Authorization':'Bearer '+token}
-        
-        df=df.drop(columns=['year','month','day','hour','min','Type'])
-        msg =text+'\n\n Retweets :  '+str(df['Retweet'].sum())+'\n Likes :  '+str(df['Favorite'].sum())+'\n Followers :  '+str(round(df['followers_count'].mean(),0)-diffollow)+' Change: '+str(df['followers_count'].mean())
-        diffollow=df['followers_count'].mean()
-        r = requests.post(url, headers=headers , data = {'message':msg})
-        time.sleep(40)
-        
-    time.sleep(40)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
